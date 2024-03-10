@@ -1,1 +1,2 @@
 /cluster-vms/.vagrant/*
+charts/argo-cd/charts/*
