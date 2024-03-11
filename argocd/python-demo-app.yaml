@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: react-demo-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MubashirUsman/Kube-at-home.git
+    targetRevision: HEAD
+    path: projects/react-demo-app/live
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: react-demo-app
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
