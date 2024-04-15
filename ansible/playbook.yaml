@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Set Hostname
+      ansible.builtin.hostname:
+        name: "{{ item }}"
+      loop:
+        - node-a
+        - node-b

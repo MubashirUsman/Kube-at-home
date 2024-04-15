@@ -1,3 +1,4 @@
-/cluster-vms/.vagrant/*
+/cluster-vms/.vagrant
 charts/argo-cd/charts/*
 /cluster-vms/*.log
+/ansible-vms/.vagrant
