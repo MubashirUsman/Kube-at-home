@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: group1
   become: yes
   tasks:
     - name: Set Hostname
@@ -7,4 +7,9 @@
         name: "{{ item }}"
       loop:
         - node-a
-        - node-b
+    - name: IP addr of node-a
+      command: ip addr show | grep inet | grep -v inet6 | awk '{print $2}' | grep 192
+      register: ip-node-a
+    - name: Display node-a ip
+      debug:
+      ip-node-a.stdout
