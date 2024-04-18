@@ -1,6 +1,12 @@
 ---
 - hosts: group1
   become: yes
+  vars:
+    kubernetes_binaries:
+      - name: kubeadm
+        url: "curl -L -o /usr/local/bin/kubeadm https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm"
+      - name: kubectl
+        url: "curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubectl"
   tasks:
     - name: Set Hostname
       ansible.builtin.hostname:
@@ -8,8 +14,25 @@
       loop:
         - node-a
     - name: IP addr of node-a
-      command: ip addr show | grep inet | grep -v inet6 | awk '{print $2}' | grep 192
-      register: ip-node-a
+      shell: ip addr show | grep inet | grep -v inet6 | awk '{print $2}' | grep 192
+      register: ip_node_a
     - name: Display node-a ip
       debug:
-      ip-node-a.stdout
+        var: ip_node_a.stdout
+    - name: Get Kube Version
+      ansible.builtin.shell:
+        cmd: "export kube-version=(curl -sL https://dl.k8s.io/release/stable.txt)"
+      args:
+        executable: /bin/bash
+    - name: Kubernetes version as fact
+      ansible.builtin.set_fact:
+        kube_version: "{{ lookup('env', 'kube-version') }}"
+    - name: Display kube version
+      debug:
+        var: kube_version
+    - name: Install Kube binaries
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+
+
+    
