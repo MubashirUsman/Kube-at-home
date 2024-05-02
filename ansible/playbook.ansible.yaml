@@ -37,7 +37,7 @@
         path: "/usr/local/bin/{{ item.name }}"
       loop: "{{ kubernetes_binaries }}"
       register: kube_binary_status
-    - name: Install Kube/let/adm/ctl binaries
+    - name: Install Kube/let/adm/ctl binaries (make them executable)
       ansible.builtin.get_url:
         url: "{{ item.url }}"
         dest: "/usr/local/bin/{{ item.name }}"
@@ -51,8 +51,24 @@
         mode: '0755'
     - name: Create systemd kubelet file to override /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
       ansible.builtin.copy:
+        dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
         content: |
           [Service]
           Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
           Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
           Environment="KUBELET_EXTRA_ARGS=--node-ip={{ ip_node_a }}"
+          # This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
+          EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
+          # This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
+          # the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
+          EnvironmentFile=-/etc/default/kubelet
+          ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
+    - name: Copy kubelet service file
+      ansible.builtin.copy:
+        src: /home/mubashirusman/Documents/Kube-at-home/ansible/kubelet.service
+        dest: /etc/systemd/service
+    - name: Systemd daemon reload
+      ansible.builtin.shell:
+        cmd: "systemctl daemon-reload && systemctl enable --now kubelet.service"
+      args:
+        executable: /bin/bash
