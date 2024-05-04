@@ -125,11 +125,16 @@
       ansible.builtin.debug:
         msg: "{{ ansible_facts.packages['containerd'] | length }} versions of containerd are installed!"
       when: "'containerd' in ansible_facts.packages"
-    - name: Generate Containerd config
+    - name: Check if Containerd config exists
+      ansible.builtin.stat:
+        path: /etc/containerd/config.toml
+      register: check_containerd_cfg
+    - name: Generate Containerd config if it does not exist
       ansible.builtin.shell:
         cmd: "sudo containerd config default > /tmp/config.toml"
       args:
         executable: /bin/bash
+      when: not check_containerd_cfg.stat.exists
     - name: Check /tmp/config.toml exists
       ansible.builtin.stat:
         path: /tmp/config.toml
@@ -155,17 +160,29 @@
       ansible.builtin.debug:
         msg: "{{ SystemdCgroup }}"
     - name: Systemctl daemon-reload
-      ansible.builtin.shell:
-        cmd: systemctl daemon-reload
-      args:
-        executable: /bin/bash
+      ansible.builtin.systemd_service:
+        daemon_reload: true
     - name: Download containerd service file
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
         dest: /etc/systemd/system/containerd.service
         mode: '0644'
-    - name: Enable containerd
+    - name: Enable and start containerd
+      ansible.builtin.systemd_service:
+        name: containerd
+        state: started
+        enabled: true
+    - name: Install conntrack and socat
+      ansible.builtin.apt:
+        name:
+          - socat
+          - conntrack
+        state: present
+    - name: Turn swap off
       ansible.builtin.shell:
-        cmd: systemctl enable --now containerd
+        cmd: swapoff -a && sudo systemctl mask swap.img.swap
       args:
         executable: /bin/bash
+    - name: Kubeadm Reset
+      ansible.builtin.shell:
+        cmd: kubeadm reset -f
