@@ -186,3 +186,13 @@
     - name: Kubeadm Reset
       ansible.builtin.shell:
         cmd: kubeadm reset -f
+    - name: Copy k8s.conf in modules-load and sysctl
+      ansible.builtin.copy:
+        dest: "/etc/{{ item }}/k8s.conf"
+        src: "./{{ item }}/k8s.conf"
+        owner: root
+        group: root
+        mode: '544'
+      loop:
+        - modules-load.d
+        - sysctl.d
