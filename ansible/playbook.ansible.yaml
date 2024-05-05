@@ -186,7 +186,7 @@
     - name: Kubeadm Reset
       ansible.builtin.shell:
         cmd: kubeadm reset -f
-    - name: Copy k8s.conf in modules-load and sysctl
+    - name: Copy k8s.conf in modules-load.d and sysctl.d
       ansible.builtin.copy:
         dest: "/etc/{{ item }}/k8s.conf"
         src: "./{{ item }}/k8s.conf"
@@ -196,3 +196,14 @@
       loop:
         - modules-load.d
         - sysctl.d
+    - name: Load sysctl settings system wide
+      ansible.posix.sysctl:
+        sysctl_file: "/etc/sysctl.d/k8s.conf"
+        reload: true
+    - name: Kubeadm init
+      ansible.builtin.shell:
+        cmd: kubeadm init --apiserver-advertise-address {{ ip_node_a }} --pod-network-cidr 100.64.0.0/16
+      args:
+        executable: /bin/bash
+
+
