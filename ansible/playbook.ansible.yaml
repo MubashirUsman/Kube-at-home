@@ -4,11 +4,11 @@
   vars:
     kubernetes_binaries:
       - name: kubeadm
-        url: "curl -L -o /usr/local/bin/kubeadm https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm"
+        url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm"
       - name: kubectl
-        url: "curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubectl"
+        url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubectl"
       - name: kubelet
-        url: "curl -L -o /usr/local/bin/kubelet https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubelet"
+        url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubelet"
   tasks:
     - name: Set Hostname
       ansible.builtin.hostname:
@@ -23,12 +23,12 @@
         var: ip_node_a.stdout
     - name: Get Kube Version
       ansible.builtin.shell:
-        cmd: "export kube-version=(curl -sL https://dl.k8s.io/release/stable.txt)"
+        cmd: export KUBE_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
       args:
         executable: /bin/bash
     - name: Kubernetes version as fact
       ansible.builtin.set_fact:
-        kube_version: "{{ lookup('env', 'kube-version') }}"
+        kube_version: "{{ lookup('env', 'KUBE_VERSION') }}"
     - name: Display kube version
       debug:
         var: kube_version
@@ -37,13 +37,17 @@
         path: "/usr/local/bin/{{ item.name }}"
       loop: "{{ kubernetes_binaries }}"
       register: kube_binary_status
+    - name: See the value in kube_binary_status
+      ansible.builtin.debug:
+        msg: "{{ item.stat.exists }}"
+      loop: "{{ kube_binary_status.results }}"
     - name: Install Kube/let/adm/ctl binaries (make them executable)
       ansible.builtin.get_url:
         url: "{{ item.url }}"
         dest: "/usr/local/bin/{{ item.name }}"
         mode: "0755"
       loop: "{{ kubernetes_binaries }}"
-      when: not kube_binary_status.results[item_index].stat.exists
+      # when: not kube_binary_status.results[item_index].stat.exists
     - name: Create kubelet drop-in file directory
       ansible.builtin.file:
         path: /etc/systemd/system/kubelet.service.d
@@ -200,10 +204,10 @@
       ansible.posix.sysctl:
         sysctl_file: "/etc/sysctl.d/k8s.conf"
         reload: true
-    - name: Kubeadm init
-      ansible.builtin.shell:
-        cmd: kubeadm init --apiserver-advertise-address {{ ip_node_a }} --pod-network-cidr 100.64.0.0/16
-      args:
-        executable: /bin/bash
+    # - name: Kubeadm init
+    #   ansible.builtin.shell:
+    #     cmd: kubeadm init --apiserver-advertise-address {{ ip_node_a }} --pod-network-cidr 100.64.0.0/16
+    #   args:
+    #     executable: /bin/bash
 
 
