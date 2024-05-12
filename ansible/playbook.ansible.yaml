@@ -35,7 +35,7 @@
         var: kube_version
     - name: Check if Kube binaries already present
       ansible.builtin.stat:
-        path: "/usr/local/bin/{{ item.key['name'] }}"
+        path: "/usr/local/bin/{{ item.name }}"
       loop: "{{ kubernetes_binaries }}"
       register: kube_binary_status
     - name: See the value in kube_binary_status
@@ -71,7 +71,7 @@
     - name: Copy kubelet service file
       ansible.builtin.copy:
         src: /home/mubashirusman/Documents/Kube-at-home/ansible/kubelet.service
-        dest: /etc/systemd/service
+        dest: /etc/systemd/system
     - name: Systemd daemon reload
       ansible.builtin.shell:
         cmd: "systemctl daemon-reload && systemctl enable --now kubelet.service"
@@ -85,7 +85,7 @@
     - name: Make containerd config directory
       ansible.builtin.file:
         path: /etc/containerd
-        state: present
+        state: directory
     - name: Download crictl 
       ansible.builtin.get_url:
         url: https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.29.0/crictl-v1.29.0-linux-amd64.tar.gz
@@ -99,7 +99,7 @@
     - name: Extract containerd in /usr/local/bin
       ansible.builtin.unarchive:
         src: /tmp/containerd.tar.gz
-        dest: /usr/local/bin/
+        dest: /usr/local/bin
         remote_src: yes
         mode: '0755'
     - name: Create directory for CNI binary
