@@ -4,7 +4,7 @@
   vars:
     kubernetes_binaries:
       - name: kubeadm
-        url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm"
+        url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm" # Using kube_version fact
       - name: kubectl
         url: "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubectl"
       - name: kubelet
@@ -23,18 +23,19 @@
         var: ip_node_a.stdout
     - name: Get Kube Version
       ansible.builtin.shell:
-        cmd: export KUBE_VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+        cmd: curl -sL https://dl.k8s.io/release/stable.txt
       args:
         executable: /bin/bash
-    - name: Kubernetes version as fact
+      register: KUBE_VERSION
+    - name: Set Kubernetes version as fact
       ansible.builtin.set_fact:
-        kube_version: "{{ lookup('env', 'KUBE_VERSION') }}"
+        kube_version: "{{ KUBE_VERSION.stdout }}"
     - name: Display kube version
       debug:
         var: kube_version
     - name: Check if Kube binaries already present
       ansible.builtin.stat:
-        path: "/usr/local/bin/{{ item.name }}"
+        path: "/usr/local/bin/{{ item.key['name'] }}"
       loop: "{{ kubernetes_binaries }}"
       register: kube_binary_status
     - name: See the value in kube_binary_status
