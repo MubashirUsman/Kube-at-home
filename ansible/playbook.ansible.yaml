@@ -77,6 +77,11 @@
         cmd: "systemctl daemon-reload && systemctl enable --now kubelet.service"
       args:
         executable: /bin/bash
+    - name: Install package for Unarchive module
+      ansible.builtin.apt:
+        name:
+          - unzip
+        state: present
     - name: Download containerd binary
       ansible.builtin.get_url:
         url: https://github.com/containerd/containerd/releases/download/v1.7.14/containerd-1.7.14-linux-amd64.tar.gz
