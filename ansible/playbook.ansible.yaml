@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: group1
   # gather_facts: true
   become: yes
   vars:
@@ -17,7 +17,7 @@
       loop:
         - node-a
     - name: IP address of node
-      shell: ip addr show | grep inet | grep -v inet6 | awk '{print $2}' | grep 192
+      shell: hostname -I | awk '{print $2}'
       register: ip_node_a
     - name: Display node-a ip
       debug:
@@ -62,7 +62,7 @@
           [Service]
           Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
           Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
-          Environment="KUBELET_EXTRA_ARGS=--node-ip={{ ip_node_a }}"
+          Environment="KUBELET_EXTRA_ARGS=--node-ip={{ ip_node_a.stdout }}"
           # This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
           EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
           # This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
@@ -215,10 +215,11 @@
     - name: Load sysctl settings system wide
       ansible.builtin.shell:
         cmd: sysctl --system
-    # - name: Kubeadm init
-    #   ansible.builtin.shell:
-    #     cmd: kubeadm init --apiserver-advertise-address {{ ip_node_a }} --pod-network-cidr 100.64.0.0/16
-    #   args:
-    #     executable: /bin/bash
+    - name: Kubeadm init
+      ansible.builtin.shell:
+        cmd: kubeadm init --apiserver-advertise-address {{ ip_node_a.stdout }} --pod-network-cidr 100.64.0.0/16
+      args:
+        executable: /bin/bash
+      register: kube_init
 
 
