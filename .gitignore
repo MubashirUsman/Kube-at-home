@@ -3,3 +3,4 @@ charts/argo-cd/charts/*
 /cluster-vms/*.log
 /ansible-vms/.vagrant
 /.vscode
+/ansible-vms/*.log

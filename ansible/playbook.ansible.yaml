@@ -1,5 +1,5 @@
 ---
-- hosts: group1
+- hosts: all
   # gather_facts: true
   become: yes
   vars:
@@ -213,11 +213,6 @@
         - modules-load.d
         - sysctl.d
     - name: Load sysctl settings system wide
-      # ansible.posix.sysctl:
-      #   name: net.ipv4.ip_forward
-      #   value: 1
-      #   sysctl_file: "/etc/sysctl.d/k8s.conf"
-      #   reload: true
       ansible.builtin.shell:
         cmd: sysctl --system
     # - name: Kubeadm init
