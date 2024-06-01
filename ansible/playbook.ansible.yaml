@@ -1,5 +1,5 @@
 ---
-- hosts: group1
+- hosts: controlplane
   # gather_facts: true
   become: yes
   vars:
